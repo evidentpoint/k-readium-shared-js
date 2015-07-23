@@ -49,7 +49,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
     var _bookStyles = options.bookStyles;
 
     var _$viewport = options.$viewport;
-    
+
     var _isIframeLoaded = false;
 
     var _$scaler;
@@ -61,7 +61,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
             this.begin = begin;
             this.end = end;
         };
-        
+
         var _pageTransition_OPACITY = new PageTransition(
             function(scale, left, top, $el, meta_width, meta_height, pageSwitchDir)
             {
@@ -76,14 +76,14 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                 $el.css("opacity", "1");
             }
         );
-        
+
         var _pageTransition_TRANSLATE = new PageTransition(
             function(scale, left, top, $el, meta_width, meta_height, pageSwitchDir)
             {
                 $el.css("opacity", "0");
-                
+
                 var elWidth = Math.ceil(meta_width * scale);
-                
+
                 var initialLeft = elWidth * 0.8 * (pageSwitchDir === 2 ? 1 : -1);
                 var move = ReadiumSDK.Helpers.CSSTransformString({left: Math.round(initialLeft), origin: "50% 50% 0", enable3D: _enable3D});
                 $el.css(move);
@@ -91,13 +91,13 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
             function(scale, left, top, $el, meta_width, meta_height, pageSwitchDir)
             {
                 $el.css("opacity", "1");
-                
+
                 ReadiumSDK.Helpers.CSSTransition($el, "transform 150ms ease-out");
 
                 $el.css("transform", "none");
             }
         );
-        
+
         var _pageTransition_ROTATE = new PageTransition(
             function(scale, left, top, $el, meta_width, meta_height, pageSwitchDir)
             {
@@ -112,18 +112,18 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
             function(scale, left, top, $el, meta_width, meta_height, pageSwitchDir)
             {
                 $el.css("opacity", "1");
-                
+
                 ReadiumSDK.Helpers.CSSTransition($el, "transform 300ms ease-in-out");
-                
+
                 $el.css("transform", "none");
             }
         );
-        
+
         var _pageTransition_SWING = new PageTransition(
             function(scale, left, top, $el, meta_width, meta_height, pageSwitchDir)
-            {            
+            {
                 $el.css("opacity", "0");
-                
+
                 // SUPER HACKY!! (just for demo)
                 var isLeft = false;
                 var isCenter = false;
@@ -147,9 +147,9 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                         break;
                     }
                 }
-                
+
                 var elWidth = Math.ceil(meta_width * scale);
-                
+
                 var initialLeft = elWidth * 0.5 * ((isLeft || isCenter && pageSwitchDir === 1) ? 1 : -1);
                 var trans = ReadiumSDK.Helpers.CSSTransformString({scale: 0.2, left: Math.round(initialLeft), angle: ((isLeft || isCenter && pageSwitchDir === 1) ? 1 : -1) * 30, origin: '50% 50% 0', enable3D: _enable3D});
                 $el.css(trans);
@@ -157,30 +157,30 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
             function(scale, left, top, $el, meta_width, meta_height, pageSwitchDir)
             {
                 $el.css("opacity", "1");
-                
+
                 ReadiumSDK.Helpers.CSSTransition($el, "transform 400ms ease-out");
 
                 $el.css("transform", "none");
             }
         );
-        
+
         var _pageTransitions = [];
         _pageTransitions.push(_pageTransition_OPACITY); // 0
         _pageTransitions.push(_pageTransition_TRANSLATE); // 1
         _pageTransitions.push(_pageTransition_ROTATE); // 2
         _pageTransitions.push(_pageTransition_SWING); // 3
-        
+
         var _disablePageTransitions = opts.disablePageTransitions || false;
 
         var _pageTransition = -1;
 
         var _enable3D = new ReadiumSDK.Models.ViewerSettings({}).enableGPUHardwareAccelerationCSS3D;
-        
+
         var _viewerSettings = undefined;
         this.updateOptions = function(o)
         {
             _viewerSettings = o;
-        
+
             var settings = _viewerSettings;
             if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined")
             {
@@ -191,14 +191,14 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
             {
                 _enable3D = true;
             }
-            
+
             if (o.pageTransition !== null && typeof o.pageTransition !== "undefined")
             {
                 _pageTransition = o.pageTransition;
             }
         };
         this.updateOptions(opts);
-        
+
         var _pageSwitchDir = 0;
         var _pageSwitchActuallyChanged = false;
         var _pageSwitchActuallyChanged_IFRAME_LOAD = false;
@@ -210,16 +210,16 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
             {
                 return;
             }
-            
+
             _pageSwitchDir = dir;
             _pageSwitchActuallyChanged = hasChanged;
         };
-        
+
         this.onIFrameLoad = function()
         {
             _pageSwitchActuallyChanged_IFRAME_LOAD = true; // second pass, but initial display for transition
         };
-        
+
         this.transformContentImmediate_BEGIN = function($el, scale, left, top)
         {
             var pageSwitchActuallyChanged = _pageSwitchActuallyChanged || _pageSwitchActuallyChanged_IFRAME_LOAD;
@@ -242,7 +242,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                 pageTransition.begin(scale, left, top, $el, self.meta_width(), self.meta_height(), _pageSwitchDir);
             }
         };
-        
+
         this.transformContentImmediate_END = function($el, scale, left, top)
         {
             if (_disablePageTransitions || _pageTransition === -1)
@@ -250,7 +250,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                 $el.css("transform", "none");
                 return;
             }
-        
+
             setTimeout(function()
             {
                 var pageTransition = (_pageTransition >= 0 && _pageTransition < _pageTransitions.length) ? _pageTransitions[_pageTransition] : undefined;
@@ -258,7 +258,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                 if (_pageSwitchDir === 0 || !pageTransition)
                 {
                     $el.css("transform", "none");
-                    
+
                     ReadiumSDK.Helpers.CSSTransition($el, "opacity 250ms linear");
 
                     $el.css("opacity", "1");
@@ -269,7 +269,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                 }
 
             }, 10);
-        };  
+        };
     };
     var _pageTransitionHandler = new PageTransitionHandler(options);
 
@@ -281,7 +281,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
         width: 0,
         height: 0
     };
-    
+
     this.element = function() {
         return _$el;
     };
@@ -304,13 +304,13 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
         var template = ReadiumSDK.Helpers.loadTemplate("single_page_frame", {});
 
         _$el = $(template);
-        
+
         _$scaler = $("#scaler", _$el);
 
         ReadiumSDK.Helpers.CSSTransition(_$el, "all 0 ease 0");
-        
+
         _$el.css("transform", "none");
-    
+
         var settings = reader.viewerSettings();
         if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined")
         {
@@ -322,7 +322,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
             // This fixes rendering issues with WebView (native apps), which crops content embedded in iframes unless GPU hardware acceleration is enabled for CSS rendering.
             _$el.css("transform", "translateZ(0)");
         }
-    
+
         _$el.css("height", "100%");
         _$el.css("width", "100%");
 
@@ -331,7 +331,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
         }
 
         _$iframe = $("iframe", _$el);
-    
+
         return this;
     };
 
@@ -390,7 +390,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
         if (_enableBookStyleOverrides) {
             self.applyBookStyles();
         }
-        
+
         updateMetaSize();
 
         _pageTransitionHandler.updateOptions(settings);
@@ -447,7 +447,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
     this.showIFrame = function() {
 
         _$iframe.css("visibility", "visible");
-        
+
         if (_useCSSTransformToHideIframe)
         {
             _$iframe.css("transform", "none");
@@ -474,7 +474,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
     this.hideIFrame = function() {
 
         _$iframe.css("visibility", "hidden");
-        
+
         // With some books, despite the iframe and its containing div wrapper being hidden,
         // the iframe's contentWindow / contentDocument is still visible!
         // Thus why we translate the iframe out of view instead.
@@ -532,7 +532,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
     {
         _pageTransitionHandler.updatePageSwitchDir(dir, hasChanged);
     };
-    
+
 
     this.transformContentImmediate = function(scale, left, top) {
 
@@ -550,7 +550,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
 //            debugger;
             return;
         }
-    
+
         var enable3D = false;
         var settings = _viewSettings;
         if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined")
@@ -569,8 +569,8 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
             _$epubHtml.css(css1);
 
             var css2 = ReadiumSDK.Helpers.CSSTransformString({scale : 1, enable3D: enable3D});
-            css2["width"] = _meta_size.width;
-            css2["height"] = _meta_size.height;
+            css2["width"] = elWidth;
+            css2["height"] = elHeight;
             _$scaler.css(css2);
         }
         else
@@ -609,7 +609,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
         _meta_size.height = 0;
 
         var size = undefined;
-        
+
         var isFallbackDimension = false;
         var widthPercent = undefined;
         var heightPercent = undefined;
@@ -627,16 +627,16 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
         if(content) {
             size = parseMetaSize(content);
         }
-        
+
         if (!size) {
-            
+
             //var $svg = $(contentDocument).find('svg');
             // if($svg.length > 0) {
             if (contentDocument && contentDocument.documentElement && contentDocument.documentElement.nodeName && contentDocument.documentElement.nodeName.toLowerCase() == "svg") {
 
                 var width = undefined;
                 var height = undefined;
-                
+
                 var wAttr = contentDocument.documentElement.getAttribute("width");
                 var isWidthPercent = wAttr && wAttr.length >= 1 && wAttr[wAttr.length-1] == '%';
                 if (wAttr) {
@@ -650,7 +650,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                     widthPercent = width;
                     width = undefined;
                 }
-                     
+
                 var hAttr = contentDocument.documentElement.getAttribute("height");
                 var isHeightPercent = hAttr && hAttr.length >= 1 && hAttr[hAttr.length-1] == '%';
                 if (hAttr) {
@@ -697,7 +697,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                 }
             }
         }
-        
+
         if (!size) {
             // Image fallback (auto-generated HTML template when WebView / iFrame is fed with image media type)
             var $img = $(contentDocument).find('img');
@@ -717,7 +717,7 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                 if($img.length > 0) {
                     var width = undefined;
                     var height = undefined;
-                
+
                     var wAttr = $img[0].getAttribute("width");
                     if (wAttr) {
                         try {
@@ -749,16 +749,16 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
                 }
             }
         }
-        
+
         if (!size) {
             // Not a great fallback, as it has the aspect ratio of the full window, but it is better than no display at all.
             width = _$viewport.width();
             height = _$viewport.height();
-            
+
             // hacky method to determine the actual available horizontal space (half the two-page spread is a reasonable approximation, this means that whatever the size of the other iframe / one_page_view, the aspect ratio of this one exactly corresponds to half the viewport rendering surface)
             var isTwoPageSyntheticSpread = $("iframe.iframe-fixed", _$viewport).length > 1;
             if (isTwoPageSyntheticSpread) width *= 0.5;
-            
+
             // the original SVG width/height might have been specified as a percentage of the containing viewport
             if (widthPercent) {
                 width *= (widthPercent / 100);
@@ -766,21 +766,21 @@ ReadiumSDK.Views.OnePageView = function(options, classes, enableBookStyleOverrid
             if (heightPercent) {
                 height *= (heightPercent / 100);
             }
-            
+
             size = {
                 width: width,
                 height: height
             }
 
             isFallbackDimension = true;
-            
+
             console.warn("Viewport: using browser / e-reader viewport dimensions!");
         }
-        
+
         if (size) {
             _meta_size.width = size.width;
             _meta_size.height = size.height;
-            
+
             // Not strictly necessary, let's preserve the percentage values
             // if (isFallbackDimension && contentDocument && contentDocument.documentElement && contentDocument.documentElement.nodeName && contentDocument.documentElement.nodeName.toLowerCase() == "svg") {
             //     contentDocument.documentElement.setAttribute("width", size.width + "px");
