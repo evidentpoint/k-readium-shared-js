@@ -203,7 +203,7 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
         }
         return undefined;
     };
-    
+
     this.addHighlight = function(spineIdRef, partialCfi, id, type, styles, options) {
         for(var spine in liveAnnotations) {
             if (spines[spine].idref === spineIdRef) {
@@ -216,7 +216,7 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
         }
         return undefined;
     };
-    
+
     this.addPlaceholder = function(spineIdRef, partialCfi, $element, id, type, styles) {
         for(var spine in liveAnnotations) {
             if (spines[spine].idref === spineIdRef) {
@@ -260,7 +260,7 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
         }
         return undefined;
     };
-    
+
     this.addPlaceholdersForVideo = function(spineIdRef, type, styles) {
         var bookmarks = [];
         for(var spine in liveAnnotations) {
@@ -284,7 +284,7 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
         }
         return result;
     };
-    
+
     this.removeHighlightsByType = function(type) {
         var result = undefined;
         for(var spine in liveAnnotations) {
@@ -293,7 +293,7 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
         }
         return result;
     };
-    
+
     this.getHighlight = function(id) {
         var result = undefined;
         for(var spine in liveAnnotations) {
@@ -384,7 +384,7 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
         return result;
     };
 
-    this.contentCfiComparator = function(contCfi1, contCfi2) { 
+    this.contentCfiComparator = function(contCfi1, contCfi2) {
         var result = undefined;
         for(var spine in liveAnnotations) {
             var annotationsForView = liveAnnotations[spine];
@@ -396,6 +396,11 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
         return result;
     };
 
+    function getElementFromViewElement(element) {
+        //TODO JC: yuck, we get two different collection structures from non fixed and fixed views.. must refactor..
+        return element.element ? element.element : element;
+    }
+
     this.getAnnotationMidpoints = function($elementSpineItemCollection){
         var output = [];
 
@@ -406,21 +411,14 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
 
             var baseOffset = {top: 0, left: 0};
             if (item.elements && item.elements.length > 0) {
-                var offsetElement = item.elements[0].element.ownerDocument.defaultView.frameElement.parentElement;
+                var firstElement = getElementFromViewElement(item.elements[0]);
+                var offsetElement = firstElement.ownerDocument.defaultView.frameElement.parentElement;
                 baseOffset = {top: offsetElement.offsetTop, left: offsetElement.offsetLeft};
             }
 
             _.each(item.elements, function(element){
 
-                var $element;
-                //TODO JC: yuck, we get two different collection structures from non fixed and fixed views.. must refactor..
-                if(element.element){
-                    $element = $(element.element);
-                    element = element.element;
-                }else{
-                    $element = $(element);
-                    element = element[0];
-                }
+                var $element = $(getElementFromViewElement(element));
                 var elementId = $element.attr('data-id');
 
                 if(!elementId){
@@ -443,7 +441,7 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
                 offset.top += baseOffset.top;
                 offset.left += baseOffset.left;
                 if(scale !== 1){
-                    offset = {top: (offset.top * scale)*(1/scale)-12, left: offset.left }; //the 12 is a "padding"
+                    offset = {top: ((offset.top - 12) * scale)*(1/scale), left: offset.left };
                 }
                 var $highlighted = {id: elementId, position: offset, lineHeight: parseInt($element.css('line-height'),10)};
                 annotations.push($highlighted)
@@ -459,7 +457,7 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
         return 'div.highlight, div.highlight-border';
     };
 
-    function removeAllHighlights(annotationModule) { 
+    function removeAllHighlights(annotationModule) {
         console.debug("Removing all highlights..");
         _.each(annotationModule.getHighlights(), function(annotation) {
             annotationModule.removeHighlight(annotation.id);
