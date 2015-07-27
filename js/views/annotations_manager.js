@@ -160,11 +160,14 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
                 }
             }
         }
+        
         mangleEvent('annotationClicked');
         mangleEvent('annotationTouched');
         mangleEvent('annotationRightClicked');
         mangleEvent('annotationHoverIn');
         mangleEvent('annotationHoverOut');
+        mangleEvent('annotationMouseMove');
+
         self['trigger'].apply(proxy, args);
     });
 
