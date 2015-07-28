@@ -965,12 +965,17 @@ ReadiumSDK.Views.CfiNavigationLogic = function ($viewport, $iframe, options) {
     //    return undefined;
     //}
 
+    //ugh, browser sniffing.. we detect gecko (spidermonkey) because it implements this
+    var isFirefox = (typeof (function(){}).toSource) === "function";
 
     function getTextNodeRectCornerPairs(rect) {
+        // every browser treats sub-pixel coords differently...
+        var roundFunc = isFirefox ? Math.floor : Math.ceil;
+
         // top left corner & top right corner
         // but for y coord use the mid point between top and bottom
-        var y = Math.ceil(rect.top + (rect.height / 2));
-        return [{x: Math.ceil(rect.left), y: y}, {x: Math.ceil(rect.right), y: y}];
+        var y = roundFunc(rect.top + (rect.height / 2));
+        return [{x: roundFunc(rect.left), y: y}, {x: roundFunc(rect.right), y: y}];
     }
 
     function getVisibleTextRangeOffsetsSelectedByFunc(textNode, pickerFunc) {
