@@ -197,10 +197,19 @@ ReadiumSDK.Views.ReaderView = function(options) {
 
         var desiredViewType = deduceDesiredViewType(spineItem);
 
-        if(_currentView) {
+        var invokeCallback = function(isViewChanged) {
+            _currentView.setViewSettings(_viewerSettings);
 
-            if(self.getCurrentViewType() == desiredViewType) {
-                callback(false);
+            // we do this to wait until elements are rendered otherwise book is not able to determine view size.
+            setTimeout(function() {
+                callback(isViewChanged);
+            }, 50);
+        };
+
+        if (_currentView) {
+
+            if (self.getCurrentViewType() === desiredViewType) {
+                invokeCallback(false);
                 return;
             }
 
@@ -245,11 +254,11 @@ ReadiumSDK.Views.ReaderView = function(options) {
             self.trigger(ReadiumSDK.Events.CONTENT_DOCUMENT_LOADED, $iframe, spineItem);
         });
 
-        _currentView.on(ReadiumSDK.Events.CONTENT_DOCUMENT_LOAD_START, function ($iframe, spineItem) {
+        _currentView.on(ReadiumSDK.Events.CONTENT_DOCUMENT_LOAD_START, function($iframe, spineItem) {
             self.trigger(ReadiumSDK.Events.CONTENT_DOCUMENT_LOAD_START, $iframe, spineItem);
         });
 
-        _currentView.on(ReadiumSDK.InternalEvents.CURRENT_VIEW_PAGINATION_CHANGED, function( pageChangeData, preventPublicTrigger ){
+        _currentView.on(ReadiumSDK.InternalEvents.CURRENT_VIEW_PAGINATION_CHANGED, function(pageChangeData, preventPublicTrigger) {
 
             //we call on onPageChanged explicitly instead of subscribing to the ReadiumSDK.Events.PAGINATION_CHANGED by
             //mediaOverlayPlayer because we hve to guarantee that mediaOverlayPlayer will be updated before the host
@@ -258,8 +267,8 @@ ReadiumSDK.Views.ReaderView = function(options) {
 
             // This event trigger can be prevented if in some cases the page change action did not cause a view to redraw.
             // Reading systems may do expensive operations on this event hook so we should not trigger it when the pagination state stayed the same.
-            if(!preventPublicTrigger){
-                _.defer(function(){
+            if (!preventPublicTrigger) {
+                _.defer(function() {
                     self.trigger(ReadiumSDK.Events.PAGINATION_CHANGED, pageChangeData);
                 });
             }
@@ -267,12 +276,12 @@ ReadiumSDK.Views.ReaderView = function(options) {
         });
 
         // automatically redraw annotations.
-        self.on(ReadiumSDK.Events.PAGINATION_CHANGED, _.debounce(function () {
+        self.on(ReadiumSDK.Events.PAGINATION_CHANGED, _.debounce(function() {
             self.redrawAnnotations();
         }, 10, true));
 
 
-        _currentView.on(ReadiumSDK.Events.FXL_VIEW_RESIZED, function(){
+        _currentView.on(ReadiumSDK.Events.FXL_VIEW_RESIZED, function() {
             self.trigger(ReadiumSDK.Events.FXL_VIEW_RESIZED);
         });
 
@@ -281,15 +290,7 @@ ReadiumSDK.Views.ReaderView = function(options) {
         });
 
         _currentView.render();
-        _currentView.setViewSettings(_viewerSettings);
-
-        // we do this to wait until elements are rendered otherwise book is not able to determine view size.
-        setTimeout(function(){
-
-            callback(true);
-
-        }, 50);
-
+        invokeCallback(true);
     }
 
     /**
