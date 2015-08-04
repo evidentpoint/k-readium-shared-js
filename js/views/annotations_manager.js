@@ -160,7 +160,7 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
                 }
             }
         }
-        
+
         mangleEvent('annotationClicked');
         mangleEvent('annotationTouched');
         mangleEvent('annotationRightClicked');
@@ -441,10 +441,10 @@ ReadiumSDK.Views.AnnotationsManager = function (proxyObj, options) {
                     scale = ReadiumSDK.Helpers.CSSTransformMatrix.getScaleFromMatrix(matrix);
                 }
                 var offset = $element.offset();
-                offset.top += baseOffset.top;
+                offset.top += baseOffset.top + ($element.height() / 2);
                 offset.left += baseOffset.left;
                 if(scale !== 1){
-                    offset = {top: ((offset.top - 12) * scale)*(1/scale), left: offset.left };
+                    offset = {top: (offset.top * scale)*(1/scale), left: offset.left };
                 }
                 var $highlighted = {id: elementId, position: offset, lineHeight: parseInt($element.css('line-height'),10)};
                 annotations.push($highlighted)
