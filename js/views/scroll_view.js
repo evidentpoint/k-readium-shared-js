@@ -693,12 +693,12 @@ ReadiumSDK.Views.ScrollView = function(options, isContinuousScroll, reader){
         return pageView;
     }
 
-    function findPageViewForSpineItem(spineItem, reverse) {
+    function findPageViewForSpineItem(spineItemIdref, reverse) {
 
         var retView = undefined;
 
         forEachItemView(function(pageView) {
-            if(pageView.currentSpineItem() == spineItem) {
+            if(pageView.currentSpineItem().idref == spineItemIdref) {
                 retView = pageView;
                 //brake the iteration
                 return false;
@@ -849,7 +849,7 @@ ReadiumSDK.Views.ScrollView = function(options, isContinuousScroll, reader){
 
         if(pageRequest.spineItem) {
 
-            var pageView = findPageViewForSpineItem(pageRequest.spineItem);
+            var pageView = findPageViewForSpineItem(pageRequest.spineItem.idref);
             if(pageView) {
                 doneLoadingSpineItem(pageView, pageRequest);
             }
@@ -864,7 +864,7 @@ ReadiumSDK.Views.ScrollView = function(options, isContinuousScroll, reader){
                     }, ON_SCROLL_TIME_DALAY + 100);
 
                     if(pageView && _deferredPageRequest) {
-                        if(pageView.currentSpineItem() === _deferredPageRequest.spineItem) {
+                        if(pageView.currentSpineItem().idref === _deferredPageRequest.spineItem.idref) {
                             doneLoadingSpineItem(pageView, _deferredPageRequest);
                         }
                         else { //while we where waiting for load new request come
