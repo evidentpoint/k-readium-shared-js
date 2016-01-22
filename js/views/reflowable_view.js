@@ -1046,4 +1046,8 @@ ReadiumSDK.Views.ReflowableView = function(options, reader){
     this.show = function() {
         _$iframe.css({"visibility": "visible"});
     };
+    
+    this.getRenderedSythenticSpread = function() {
+        return self.getPaginationInfo().reflowablePagination.visibleColumnCount > 1 ? 'double' : 'single';
+    };
 };

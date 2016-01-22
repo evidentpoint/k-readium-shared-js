@@ -2013,10 +2013,10 @@ ReadiumSDK.Views.ReaderView = function(options) {
     };
 
     this.getRenderedSythenticSpread = function(){
-        if (this.getCurrentViewType() === ReadiumSDK.Views.ReaderView.VIEW_TYPE_SCROLLED_CONTINUOUS) {
-            return 'single';
+        if (_currentView) {
+            return _currentView.getRenderedSythenticSpread();
         }
-        return self.getPaginationInfo().openPages.length === 2 ? 'double' : 'single';
+        return undefined;
     };
 
     /**

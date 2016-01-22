@@ -1516,4 +1516,8 @@ ReadiumSDK.Views.ScrollView = function(options, isContinuousScroll, reader){
             return pageView.getElementFromPoint(x, y);
         });
     };
+    
+    this.getRenderedSythenticSpread = function() {
+        return 'single';
+    };
 };

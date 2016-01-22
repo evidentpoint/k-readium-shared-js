@@ -867,5 +867,9 @@ ReadiumSDK.Views.FixedView = function(options, reader){
             one_page_view.showIFrame();
         });
     };
+    
+    this.getRenderedSythenticSpread = function() {
+        return _spread.isSyntheticSpread() ? 'double' : 'single';
+    };
 
 };
