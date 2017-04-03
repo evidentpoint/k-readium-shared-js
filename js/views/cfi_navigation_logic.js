@@ -442,8 +442,15 @@ var CfiNavigationLogic = function (options) {
                 //noinspection JSUnresolvedFunction
                 clientRectList = range.getClientRects();
             } else {
-                //noinspection JSUnresolvedFunction
-                clientRectList = $el[0].getClientRects();
+                if ($el.parent()[0].tagName === "video"){
+                    // create a rect using the video
+                    var videoRect = $el.parent()[0].getClientRects();
+                    clientRectList = videoRect;
+                } else {
+                    //noinspection JSUnresolvedFunction
+                    clientRectList = $el[0].getClientRects();
+                    console.log(clientRectList);
+                }
             }
 
             // all the separate rectangles (for detecting position of the element
@@ -579,6 +586,7 @@ var CfiNavigationLogic = function (options) {
         }
 
         this.getCfiForElement = function (element) {
+
             var cfi = EPUBcfi.Generator.generateElementCFIComponent(element,
                 this.getClassBlacklist(),
                 this.getElementBlacklist(),
@@ -750,7 +758,7 @@ var CfiNavigationLogic = function (options) {
             var nodeClientRects = getRangeClientRectList(nodeRange,visibleContentOffsets);
              //Split Ratio depends swhether we are searching for the lastCFI or first CFI, last CFI will most likely be near the end of the given view , so we allocate the spliting to be 60/40
             // 40/60 for firstCFI
-            var splitRatio = deterministicSplit(nodeClientRects);
+            var splitRatio = deterministicSplit(nodeClientRects,pickerFunc([0,1]));
             var outputRange = getTextRangeOffset(splitRange(nodeRange, parseFloat(splitRatio)), visibleContentOffsets ,pickerFunc([0, 1]), splitRatio,
                 function (rect) {
                     return (isVerticalWritingMode() ? rect.height : rect.width) && isRectVisible(rect, false, frameDimensions);
@@ -761,7 +769,7 @@ var CfiNavigationLogic = function (options) {
         }
 
 
-        function deterministicSplit (rectList) {
+        function deterministicSplit (rectList,directionBit) {
             // Calculate total cumulate Height for both visible portions and invisible portions and find the split
             var visibleRects = _.filter(rectList,function (rect) {
                 return (isVerticalWritingMode() ? rect.height : rect.width) && isRectVisible(rect, false, getFrameDimensions());
@@ -770,7 +778,12 @@ var CfiNavigationLogic = function (options) {
             var totalHeight = calculateCumulativeHeight(rectList);
             if (visibleRectHeight == totalHeight ){
                 // either all visible or its a 50/50 split
-                return 50;
+                if (directionBit == 0) {
+                    return 40;
+
+                }else {
+                    return 60;
+                }
             } else {
                 return ((parseFloat(visibleRectHeight/totalHeight) * 100));
             }
@@ -833,7 +846,7 @@ var CfiNavigationLogic = function (options) {
                     currRange = splitRange(currRange[changeDirection(directionBit)], parseFloat(splitRatio));
                  }
             }
-            console.log(currRange[0]);
+
             return currRange[0];
         }
 
@@ -845,7 +858,6 @@ var CfiNavigationLogic = function (options) {
 
         function findVisibleLeafNodeCfi(leafNodeList, pickerFunc, targetLeafNode, visibleContentOffsets, frameDimensions, startingParent) {
             var index = 0;
-
             if (!targetLeafNode) {
                 index = leafNodeList.indexOf(pickerFunc(leafNodeList));
                 var leafNode = leafNodeList[index];
@@ -874,19 +886,22 @@ var CfiNavigationLogic = function (options) {
                 if (DEBUG) console.warn("findVisibleLeafNodeCfi: stopped recursion early");
                 return null;
             }
-
             //if a valid text node is found, try to generate a CFI with range offsets
             if (textNode && isValidTextNode(textNode)) {
-
                 var visibleRange = getVisibleTextRangeOffsets(textNode, pickerFunc, visibleContentOffsets, frameDimensions);
                 if (!visibleRange) {
                     //the text node is valid, but not visible..
                     //let's try again with the next node in the list
                     return findVisibleLeafNodeCfi(leafNodeList, pickerFunc, visibleLeafNode, visibleContentOffsets, frameDimensions, startingParent);
                 }
-                return generateCfiFromDomRange(visibleRange);
+                var textCFI = generateCfiFromDomRange(visibleRange);
+                return textCFI;
+            // we need to also check for medai elements as a cfi
             } else {
                 //if not then generate a CFI for the element
+                if ( element.parentElement.nodeName === "video") {
+                    element = element.parentElement;
+                }
                 return self.getCfiForElement(element);
             }
         }
@@ -1211,6 +1226,7 @@ var CfiNavigationLogic = function (options) {
                         element: $element[0], // DOM Element is pushed
                         textNode: isTextNode ? $node[0] : null,
                         percentVisible: visibilityPercentage
+
                     });
                 }
             });
@@ -1231,7 +1247,6 @@ var CfiNavigationLogic = function (options) {
             var $elements = this.getLeafNodeElements($(this.getBodyElement()));
 
             var visibleElements = this.getVisibleElements($elements, visibleContentOffsets, frameDimensions);
-
             if (_cacheEnabled) {
                 _cache.visibleLeafNodes.set(cacheKey, visibleElements);
             }
@@ -1310,11 +1325,16 @@ var CfiNavigationLogic = function (options) {
             var $leafNodeElements = [];
 
             var node;
+
+            // suspecting this bypasses all text nodes inside a table node, since it is not a leaf node.
             while ((node = nodeIterator.nextNode())) {
+
                 var isLeafNode = node.nodeType === Node.ELEMENT_NODE && !node.childElementCount && !isValidTextNodeContent(node.textContent);
                 if (isLeafNode || isValidTextNode(node)) {
                     var $node = $(node);
+                    //console.log($node);
                     var $element = (node.nodeType === Node.TEXT_NODE) ? $node.parent() : $node;
+
                     if (!isElementBlacklisted($element)) {
                         $leafNodeElements.push($node);
                     }
@@ -1324,7 +1344,7 @@ var CfiNavigationLogic = function (options) {
             if (_cacheEnabled) {
                 _cache.leafNodeElements.set($root, $leafNodeElements);
             }
-
+            //console.log($leafNodeElements);
             return $leafNodeElements;
         };
 
