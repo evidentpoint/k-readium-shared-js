@@ -38,7 +38,6 @@
 define(["jquery", "underscore", "../helpers", 'readium_cfi_js'], function($, _, Helpers, epubCfi) {
 
 var CfiNavigationLogic = function (options) {
-
     var self = this;
     options = options || {};
 
@@ -116,9 +115,9 @@ var CfiNavigationLogic = function (options) {
         visibleContentOffsets = visibleContentOffsets || getVisibleContentOffsets();
 
         //noinspection JSUnresolvedFunction
-       // console.log(range.getClientRects().length);
+
         return _.map(range.getClientRects(), function (rect) {
-           // console.log(rect);
+
             return normalizeRectangle(rect, visibleContentOffsets.left, visibleContentOffsets.top);
         });
     }
@@ -449,7 +448,7 @@ var CfiNavigationLogic = function (options) {
                 } else {
                     //noinspection JSUnresolvedFunction
                     clientRectList = $el[0].getClientRects();
-                    console.log(clientRectList);
+
                 }
             }
 
@@ -685,7 +684,6 @@ var CfiNavigationLogic = function (options) {
                 console.log('Did not generate a valid CFI:' + cfi);
                 return undefined;
             }
-
             return cfi;
         };
 
@@ -724,15 +722,13 @@ var CfiNavigationLogic = function (options) {
 
         var DEBUG = false;
 
-
-
         function determineSplit (Range,division) {
-            //either  50/50 or 60 /40
            var percent = parseFloat(division)/parseFloat(100);
            var length =  Math.round((Range.endOffset - Range.startOffset )* percent);
            return length;
 
         }
+
         function splitRange(Range, division) {
             if ( Range.endOffset-Range.startOffset == 1){return [Range];}
             var length = determineSplit(Range,parseFloat(division));
@@ -752,11 +748,8 @@ var CfiNavigationLogic = function (options) {
         function getVisibleTextRangeOffsets(textNode, pickerFunc, visibleContentOffsets, frameDimensions) {
             visibleContentOffsets = visibleContentOffsets || getVisibleContentOffsets();
 
-            // Create a Range around targeted textNode
             var nodeRange = createRangeFromNode(textNode);
-            // split the range into two halves
             var nodeClientRects = getRangeClientRectList(nodeRange,visibleContentOffsets);
-             //Split Ratio depends swhether we are searching for the lastCFI or first CFI, last CFI will most likely be near the end of the given view , so we allocate the spliting to be 60/40
             // 40/60 for firstCFI
             var splitRatio = deterministicSplit(nodeClientRects,pickerFunc([0,1]));
             var outputRange = getTextRangeOffset(splitRange(nodeRange, parseFloat(splitRatio)), visibleContentOffsets ,pickerFunc([0, 1]), splitRatio,
@@ -764,30 +757,30 @@ var CfiNavigationLogic = function (options) {
                     return (isVerticalWritingMode() ? rect.height : rect.width) && isRectVisible(rect, false, frameDimensions);
                 });
             return outputRange;
-            // Split Range into two halves for binary search implementation
-
         }
 
 
         function deterministicSplit (rectList,directionBit) {
+            var split = 0 ;
             // Calculate total cumulate Height for both visible portions and invisible portions and find the split
             var visibleRects = _.filter(rectList,function (rect) {
                 return (isVerticalWritingMode() ? rect.height : rect.width) && isRectVisible(rect, false, getFrameDimensions());
             });
             var visibleRectHeight = calculateCumulativeHeight(visibleRects);
+            var invisibleRectHeight = totalHeight - visibleRectHeight;
             var totalHeight = calculateCumulativeHeight(rectList);
+
             if (visibleRectHeight == totalHeight ){
                 // either all visible or its a 50/50 split
                 if (directionBit == 0) {
-                    return 40;
-
+                    return 45;
                 }else {
-                    return 60;
+                    return 55;
                 }
             } else {
-                return ((parseFloat(visibleRectHeight/totalHeight) * 100));
+                split =  ((parseFloat(visibleRectHeight/totalHeight) * 100));
+                return invisibleRectHeight > visibleRectHeight ? split+5 : split -5;
             }
-
         }
 
         function rectTopHash (rectList) {
@@ -825,19 +818,9 @@ var CfiNavigationLogic = function (options) {
         function getTextRangeOffset(startingSet, visibleContentOffsets, directionBit,splitRatio, filterfunc) {
 
             var currRange = startingSet;
-            var count = 1 ;
-            //split ratio determined by directionBit
-
-
             //begin iterative binary search, each iteration will check Range length and visibility
-            // if current range has visible fragments we check the range length
-            // if not visible check the other half.
             while (currRange.length !=1) {
-
-                count ++;
-
                 var currTextNodeFragments = getRangeClientRectList(currRange[directionBit], visibleContentOffsets);
-
                 if (fragmentVisible(currTextNodeFragments, filterfunc)) {
                     currRange = splitRange(currRange[directionBit], parseFloat(splitRatio));
                 }
@@ -846,13 +829,11 @@ var CfiNavigationLogic = function (options) {
                     currRange = splitRange(currRange[changeDirection(directionBit)], parseFloat(splitRatio));
                  }
             }
-
             return currRange[0];
         }
 
         function fragmentVisible(fragments,filterfunc) {
             var visibleFragments = _.filter(fragments,filterfunc);
-            var testBool = visibleFragments.length? true: false;
             return visibleFragments.length ? true : false;
         }
 
@@ -1332,7 +1313,6 @@ var CfiNavigationLogic = function (options) {
                 var isLeafNode = node.nodeType === Node.ELEMENT_NODE && !node.childElementCount && !isValidTextNodeContent(node.textContent);
                 if (isLeafNode || isValidTextNode(node)) {
                     var $node = $(node);
-                    //console.log($node);
                     var $element = (node.nodeType === Node.TEXT_NODE) ? $node.parent() : $node;
 
                     if (!isElementBlacklisted($element)) {
@@ -1344,7 +1324,6 @@ var CfiNavigationLogic = function (options) {
             if (_cacheEnabled) {
                 _cache.leafNodeElements.set($root, $leafNodeElements);
             }
-            //console.log($leafNodeElements);
             return $leafNodeElements;
         };
 
