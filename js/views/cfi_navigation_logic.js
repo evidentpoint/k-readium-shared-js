@@ -441,15 +441,8 @@ var CfiNavigationLogic = function (options) {
                 //noinspection JSUnresolvedFunction
                 clientRectList = range.getClientRects();
             } else {
-                if ($el.parent()[0].tagName === "video"){
-                    // create a rect using the video
-                    var videoRect = $el.parent()[0].getClientRects();
-                    clientRectList = videoRect;
-                } else {
-                    //noinspection JSUnresolvedFunction
-                    clientRectList = $el[0].getClientRects();
-
-                }
+                //noinspection JSUnresolvedFunction
+                clientRectList = $el[0].getClientRects();
             }
 
             // all the separate rectangles (for detecting position of the element
@@ -880,9 +873,6 @@ var CfiNavigationLogic = function (options) {
             // we need to also check for medai elements as a cfi
             } else {
                 //if not then generate a CFI for the element
-                if ( element.parentElement.nodeName === "video") {
-                    element = element.parentElement;
-                }
                 return self.getCfiForElement(element);
             }
         }
