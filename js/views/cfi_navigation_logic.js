@@ -41,7 +41,10 @@ var CfiNavigationLogic = function (options) {
     var self = this;
     options = options || {};
 
-    var DEBUG = ReadiumSDK.DEBUG_MODE;
+    var _DEBUG = ReadiumSDK.DEBUG_MODE;
+    if (_DEBUG) {
+        window.top._DEBUG_visibleTextRangeOffsetsRuns = window.top._DEBUG_visibleTextRangeOffsetsRuns || [];
+    }
 
     this.getRootElement = function () {
 
@@ -650,7 +653,7 @@ var CfiNavigationLogic = function (options) {
                     commonAncestorContainer: range.commonAncestorContainer
                 };
 
-                if (DEBUG) {
+                if (_DEBUG) {
                     drawDebugOverlayFromDomRange(wrappedRange);
                 }
 
@@ -797,7 +800,10 @@ var CfiNavigationLogic = function (options) {
                     currRange = splitRange(currRange[directionBit ? 0 : 1], splitRatio);
                 }
             }
-            if (DEBUG) console.debug('getVisibleTextRangeOffsets:getTextRangeOffset:runCount', runCount);
+            if (_DEBUG) {
+                console.debug('getVisibleTextRangeOffsets:getTextRangeOffset:runCount', runCount);
+                window.top._DEBUG_visibleTextRangeOffsetsRuns.push(runCount);
+            }
             return currRange[0];
         }
 
@@ -833,7 +839,7 @@ var CfiNavigationLogic = function (options) {
             var textNode = visibleLeafNode.textNode;
 
             if (targetLeafNode && element !== startingParent && !_.contains($(textNode || element).parents(), startingParent)) {
-                if (DEBUG) console.warn("findVisibleLeafNodeCfi: stopped recursion early");
+                if (_DEBUG) console.warn("findVisibleLeafNodeCfi: stopped recursion early");
                 return null;
             }
             //if a valid text node is found, try to generate a CFI with range offsets
@@ -997,7 +1003,7 @@ var CfiNavigationLogic = function (options) {
                         this.getElementBlacklist(),
                         this.getIdBlacklist());
 
-                    if (DEBUG) {
+                    if (_DEBUG) {
                         console.log(nodeResult);
                     }
                 } catch (ex) {
@@ -1020,7 +1026,7 @@ var CfiNavigationLogic = function (options) {
                             endRangeInfo.offset)
                         : null;
 
-                if (DEBUG) {
+                if (_DEBUG) {
                     console.log(nodeRangeClientRect);
                     addOverlayRect(nodeRangeClientRect, 'purple', contentDoc);
                 }
@@ -1358,7 +1364,7 @@ var CfiNavigationLogic = function (options) {
             _cache._invalidate();
         };
 
-        //if (DEBUG) {
+        //if (_DEBUG) {
 
         var $debugOverlays = [];
 
@@ -1456,6 +1462,12 @@ var CfiNavigationLogic = function (options) {
                 var cfi2 = ReadiumSDK.reader.getLastVisibleCfi();
                 var range2 = ReadiumSDK.reader.getDomRangeFromRangeCfi(cfi2);
                 console.log(cfi2, range2, drawDebugOverlayFromDomRange(range2));
+            },
+            visibleTextRangeOffsetsRunsAvg: function () {
+                var arr = window.top._DEBUG_visibleTextRangeOffsetsRuns;
+                return arr.reduce(function (a, b) {
+                        return a + b;
+                    }) / arr.length;
             }
         };
 
