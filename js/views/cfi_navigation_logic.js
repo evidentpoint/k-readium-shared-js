@@ -1198,7 +1198,11 @@ var CfiNavigationLogic = function (options) {
             var $elements = this.getLeafNodeElements($(this.getBodyElement()));
 
             var visibleElements = this.getVisibleElements($elements, visibleContentOffsets, frameDimensions);
-            if (_cacheEnabled) {
+
+            // Only hit the cache if the number of visible elements is smaller than the full list.
+            // This is to prevent an issue where when this is called early in the pagination chain,
+            // it would calculate and cache the whole content doc as being visible
+            if (_cacheEnabled && visibleElements.length < $elements.length) {
                 _cache.visibleLeafNodes.set(cacheKey, visibleElements);
             }
 
@@ -1358,7 +1362,7 @@ var CfiNavigationLogic = function (options) {
 
         var _cache = new Cache();
 
-        var _cacheEnabled = false;
+        var _cacheEnabled = true;
 
         this.invalidateCache = function () {
             _cache._invalidate();

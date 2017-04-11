@@ -141,9 +141,9 @@ var ReflowableView = function(options, reader){
         return true;
     };
 
-    this.onViewportResize = function() {
-
-        if(updateViewportSize()) {
+    this.onViewportResize = function(forceResize) {
+        if (forceResize || updateViewportSize()) {
+            _navigationLogic.invalidateCache();
             updatePagination();
         }
     };
@@ -160,12 +160,9 @@ var ReflowableView = function(options, reader){
         _fontSize = settings.fontSize;
         _fontSelection = settings.fontSelection;
 
-        updateViewportSize();
-
         if (!docWillChange) {
-            updateColumnGap();
-
-            updateHtmlFontInfo();
+            updatePaginationParameters();
+            updatePagination();
         }
     };
     
@@ -261,23 +258,49 @@ var ReflowableView = function(options, reader){
         }
     }
 
-    function updateHtmlFontInfo() {
-    
-        if(_$epubHtml) {
+    var _lastFontSize = _fontSize,
+        _lastFontSelection = _fontSelection;
+
+    function updateHtmlFontInfo(forceUpdate, callback) {
+
+        if (_$epubHtml && (forceUpdate || _lastFontSize !== _fontSize || _lastFontSelection !== _fontSelection)) {
             var i = _fontSelection;
             var useDefault = !reader.fonts || !reader.fonts.length || i <= 0 || (i-1) >= reader.fonts.length;
             var font = (useDefault ?
                         {} :
                         reader.fonts[i - 1]);
-            Helpers.UpdateHtmlFontAttributes(_$epubHtml, _fontSize, font, function() {self.applyStyles();});
+            Helpers.UpdateHtmlFontAttributes(_$epubHtml, _fontSize, font, callback);
+            _lastFontSize = _fontSize;
+            _lastFontSelection = _fontSelection;
+            return true;
         }
     }
 
-    function updateColumnGap() {
+    var _lastColumnGap = (_paginationInfo || {}).columnGap;
 
-        if(_$epubHtml) {
+    function updateColumnGap(forceUpdate) {
+        var columnGap = _paginationInfo.columnGap;
 
-            _$epubHtml.css("column-gap", _paginationInfo.columnGap + "px");
+        if (_$epubHtml && (forceUpdate || _lastColumnGap !== columnGap)) {
+            _$epubHtml.css("column-gap", columnGap + "px");
+            _lastColumnGap = columnGap;
+            return true;
+        }
+    }
+
+    function updatePaginationParameters() {
+        var invalidateCache = false;
+        if (updateHtmlFontInfo()) {
+            invalidateCache = true;
+        }
+        if (updateColumnGap()) {
+            invalidateCache = true;
+        }
+        if (updateViewportSize()) {
+            invalidateCache = true;
+        }
+        if (invalidateCache) {
+            _navigationLogic.invalidateCache();
         }
     }
 
@@ -373,7 +396,6 @@ var ReflowableView = function(options, reader){
         hideBook();
         _$iframe.css("opacity", "1");
 
-        updateViewportSize();
         _$epubHtml.css("height", _lastViewPortSize.height + "px");
 
         _$epubHtml.css("position", "relative");
@@ -393,15 +415,18 @@ var ReflowableView = function(options, reader){
         //
         // ////
 
-        self.applyBookStyles();
+        self.applyBookStyles(self);
         resizeImages();
 
-        updateColumnGap();
-
-        updateHtmlFontInfo();
+        updateColumnGap(true);
+        updateHtmlFontInfo(true, function () {
+            self.applyStyles(self);
+            updatePaginationParameters();
+            updatePagination();
+        });
     }
 
-    this.applyStyles = function() {
+    this.applyStyles = function(initiator) {
 
         Helpers.setStyles(_userStyles.getStyles(), _$el.parent());
 
@@ -410,15 +435,21 @@ var ReflowableView = function(options, reader){
         var elementMargins = Helpers.Margins.fromElement(_$el);
         setFrameSizesToRectangle(elementMargins.padding);
 
-
-        updateViewportSize();
-        updatePagination();
+        if (initiator !== self) {
+            updatePaginationParameters();
+            updatePagination();
+        }
     };
 
-    this.applyBookStyles = function() {
+    this.applyBookStyles = function(initiator) {
 
         if(_$epubHtml) { // implies _$iframe
             Helpers.setStyles(_bookStyles.getStyles(), _$iframe[0].contentDocument); //_$epubHtml
+        }
+
+        if (initiator !== self) {
+            updatePaginationParameters();
+            updatePagination();
         }
     };
 
