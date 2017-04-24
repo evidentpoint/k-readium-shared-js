@@ -66,6 +66,7 @@ var ScrollView = function (options, isContinuousScroll, reader) {
     var _currentPageRequest;
     var _$contentFrame;
     var _$el;
+    var _currentPositionDeferred;
 
     var _stopTransientViewUpdate = false;
 
@@ -276,6 +277,8 @@ var ScrollView = function (options, isContinuousScroll, reader) {
             && !_isLoadingNewSpineItemOnPageRequest) {
 
             self.resetCurrentPosition();
+
+            _currentPositionDeferred = $.Deferred();
 
             updateTransientViews();
             onPaginationChanged(self);
@@ -489,16 +492,27 @@ var ScrollView = function (options, isContinuousScroll, reader) {
     this.saveCurrentPosition = function() {
         // If there's a deferred page request, there's no point in saving the current position
         // as it's going to change soon
-        if (_deferredPageRequest) {
-            return;
-        }
+        try {
+            if (_deferredPageRequest) {
+                return;
+            }
 
-        var _firstVisibleCfi = self.getFirstVisibleCfi();
-        var spineItem = _spine.getItemById(_firstVisibleCfi.idref);
-        if (spineItem) {
-            _currentPageRequest = new PageOpenRequest(spineItem, self);
-            _currentPageRequest.setElementCfi(_firstVisibleCfi.contentCFI);
+            var _firstVisibleCfi = self.getFirstVisibleCfi();
+            var spineItem = _spine.getItemById(_firstVisibleCfi.idref);
+            if (spineItem) {
+                _currentPageRequest = new PageOpenRequest(spineItem, self);
+                _currentPageRequest.setElementCfi(_firstVisibleCfi.contentCFI);
+                _currentPositionDeferred.resolve(_firstVisibleCfi);
+            }
+        } finally {
+            if (_currentPositionDeferred && _currentPositionDeferred.state() === "pending") {
+                _currentPositionDeferred.reject();
+            }
         }
+    };
+
+    this.getCurrentPosition = function() {
+        return _currentPositionDeferred ? _currentPositionDeferred.promise() : undefined;
     };
 
     this.restoreCurrentPosition = function() {
@@ -1420,6 +1434,8 @@ var ScrollView = function (options, isContinuousScroll, reader) {
         });
     };
 
+    //----------- Begin Texidium Changes ----------- // 
+
     this.getRangeCfiFromDomRange = function (domRange) {
         return callOnVisiblePageView(function (pageView) {
             return pageView.getRangeCfiFromDomRange(domRange);
@@ -1428,20 +1444,20 @@ var ScrollView = function (options, isContinuousScroll, reader) {
 
     this.getVisibleCfiFromPoint = function (x, y, precisePoint) {
         return callOnVisiblePageView(function (pageView) {
-            return createBookmark(pageView.currentSpineItem(), pageView.getVisibleCfiFromPoint(x, y, precisePoint));
+            return createBookmarkFromCfi(pageView.currentSpineItem(), pageView.getVisibleCfiFromPoint(x, y, precisePoint));
         });
     };
 
     this.getRangeCfiFromPoints = function (startX, startY, endX, endY) {
         return callOnVisiblePageView(function (pageView) {
-            return createBookmark(pageView.currentSpineItem(), pageView.getRangeCfiFromPoints(startX, startY, endX, endY));
+            return createBookmarkFromCfi(pageView.currentSpineItem(), pageView.getRangeCfiFromPoints(startX, startY, endX, endY));
         });
     };
 
     this.getCfiForElement = function(element) {
-        return callOnVisiblePageView(function (pageView) {
-            return createBookmark(pageView.currentSpineItem(), pageView.getCfiForElement(element));
-        });
+        return callOnVisiblePageView(function(pageView){
+            return createBookmarkFromCfi(pageView.currentSpineItem(), pageView.getCfiForElement(element).contentCFI);
+        })
     };
 
     this.getElementFromPoint = function (x, y) {
@@ -1449,6 +1465,12 @@ var ScrollView = function (options, isContinuousScroll, reader) {
             return pageView.getElementFromPoint(x, y);
         });
     };
+
+    function createBookmarkFromCfi(currentSpineItem, cfi){
+        return new BookmarkData(currentSpineItem.idref, cfi);
+    }
+
+    //----------- End Texidium Changes ----------- // 
 };
 
 return ScrollView;

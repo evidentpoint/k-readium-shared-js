@@ -59,6 +59,7 @@ var ReflowableView = function(options, reader){
     var _$iframe;
     var _$epubHtml;
     var _lastPageRequest = undefined;
+    var _currentPositionDeferred;
 
     var _cfiClassBlacklist = ["cfi-marker", "mo-cfi-highlight", "resize-sensor", "resize-sensor-expand", "resize-sensor-shrink", "resize-sensor-inner"];
     var _cfiElementBlacklist = [];
@@ -141,9 +142,9 @@ var ReflowableView = function(options, reader){
         return true;
     };
 
-    this.onViewportResize = function(forceResize) {
-        if (forceResize || updateViewportSize()) {
-            _navigationLogic.invalidateCache();
+    this.onViewportResize = function() {
+
+        if(updateViewportSize()) {
             updatePagination();
         }
     };
@@ -160,9 +161,12 @@ var ReflowableView = function(options, reader){
         _fontSize = settings.fontSize;
         _fontSelection = settings.fontSelection;
 
+        updateViewportSize();
+
         if (!docWillChange) {
-            updatePaginationParameters();
-            updatePagination();
+            updateColumnGap();
+
+            updateHtmlFontInfo();
         }
     };
     
@@ -258,49 +262,23 @@ var ReflowableView = function(options, reader){
         }
     }
 
-    var _lastFontSize = _fontSize,
-        _lastFontSelection = _fontSelection;
-
-    function updateHtmlFontInfo(forceUpdate, callback) {
-
-        if (_$epubHtml && (forceUpdate || _lastFontSize !== _fontSize || _lastFontSelection !== _fontSelection)) {
+    function updateHtmlFontInfo() {
+    
+        if(_$epubHtml) {
             var i = _fontSelection;
             var useDefault = !reader.fonts || !reader.fonts.length || i <= 0 || (i-1) >= reader.fonts.length;
             var font = (useDefault ?
                         {} :
                         reader.fonts[i - 1]);
-            Helpers.UpdateHtmlFontAttributes(_$epubHtml, _fontSize, font, callback);
-            _lastFontSize = _fontSize;
-            _lastFontSelection = _fontSelection;
-            return true;
+            Helpers.UpdateHtmlFontAttributes(_$epubHtml, _fontSize, font, function() {self.applyStyles();});
         }
     }
 
-    var _lastColumnGap = (_paginationInfo || {}).columnGap;
+    function updateColumnGap() {
 
-    function updateColumnGap(forceUpdate) {
-        var columnGap = _paginationInfo.columnGap;
+        if(_$epubHtml) {
 
-        if (_$epubHtml && (forceUpdate || _lastColumnGap !== columnGap)) {
-            _$epubHtml.css("column-gap", columnGap + "px");
-            _lastColumnGap = columnGap;
-            return true;
-        }
-    }
-
-    function updatePaginationParameters() {
-        var invalidateCache = false;
-        if (updateHtmlFontInfo()) {
-            invalidateCache = true;
-        }
-        if (updateColumnGap()) {
-            invalidateCache = true;
-        }
-        if (updateViewportSize()) {
-            invalidateCache = true;
-        }
-        if (invalidateCache) {
-            _navigationLogic.invalidateCache();
+            _$epubHtml.css("column-gap", _paginationInfo.columnGap + "px");
         }
     }
 
@@ -396,6 +374,7 @@ var ReflowableView = function(options, reader){
         hideBook();
         _$iframe.css("opacity", "1");
 
+        updateViewportSize();
         _$epubHtml.css("height", _lastViewPortSize.height + "px");
 
         _$epubHtml.css("position", "relative");
@@ -415,18 +394,15 @@ var ReflowableView = function(options, reader){
         //
         // ////
 
-        self.applyBookStyles(self);
+        self.applyBookStyles();
         resizeImages();
 
-        updateColumnGap(true);
-        updateHtmlFontInfo(true, function () {
-            self.applyStyles(self);
-            updatePaginationParameters();
-            updatePagination();
-        });
+        updateColumnGap();
+
+        updateHtmlFontInfo();
     }
 
-    this.applyStyles = function(initiator) {
+    this.applyStyles = function() {
 
         Helpers.setStyles(_userStyles.getStyles(), _$el.parent());
 
@@ -435,21 +411,15 @@ var ReflowableView = function(options, reader){
         var elementMargins = Helpers.Margins.fromElement(_$el);
         setFrameSizesToRectangle(elementMargins.padding);
 
-        if (initiator !== self) {
-            updatePaginationParameters();
-            updatePagination();
-        }
+
+        updateViewportSize();
+        updatePagination();
     };
 
-    this.applyBookStyles = function(initiator) {
+    this.applyBookStyles = function() {
 
         if(_$epubHtml) { // implies _$iframe
             Helpers.setStyles(_bookStyles.getStyles(), _$iframe[0].contentDocument); //_$epubHtml
-        }
-
-        if (initiator !== self) {
-            updatePaginationParameters();
-            updatePagination();
         }
     };
 
@@ -572,16 +542,27 @@ var ReflowableView = function(options, reader){
     };
 
     this.saveCurrentPosition = function() {
-        // If there's a deferred page request, there's no point in saving the current position
-        // as it's going to change soon
-        if (_deferredPageRequest) {
-            return;
-        }
+        try {
+            // If there's a deferred page request, there's no point in saving the current position
+            // as it's going to change soon
+            if (_deferredPageRequest) {
+                return;
+            }
 
-        var _firstVisibleCfi = self.getFirstVisibleCfi();
-        var _lastVisibleCfi = self.getLastVisibleCfi();
-        _lastPageRequest = new PageOpenRequest(_currentSpineItem, self);
-        _lastPageRequest.setFirstAndLastVisibleCfi(_firstVisibleCfi.contentCFI, _lastVisibleCfi.contentCFI);
+            var _firstVisibleCfi = self.getFirstVisibleCfi();
+            var _lastVisibleCfi = _firstVisibleCfi; // self.getLastVisibleCfi();
+            _lastPageRequest = new PageOpenRequest(_currentSpineItem, self);
+            _lastPageRequest.setFirstAndLastVisibleCfi(_firstVisibleCfi.contentCFI, _lastVisibleCfi.contentCFI);
+            _currentPositionDeferred.resolve(_firstVisibleCfi);
+        } finally {
+            if (_currentPositionDeferred && _currentPositionDeferred.state() === "pending") {
+                _currentPositionDeferred.reject();
+            }
+        }
+    };
+
+    this.getCurrentPosition = function() {
+        return _currentPositionDeferred ? _currentPositionDeferred.promise() : undefined;
     };
 
     this.restoreCurrentPosition = function() {
@@ -637,6 +618,8 @@ var ReflowableView = function(options, reader){
         redraw();
 
         _.defer(function () {
+
+            _currentPositionDeferred = $.Deferred();
 
             if (_lastPageRequest == undefined) {
                 self.saveCurrentPosition();

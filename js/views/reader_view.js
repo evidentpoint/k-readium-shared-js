@@ -1607,6 +1607,11 @@ var ReaderView = function (options) {
     this.getPaginationInfo = function(){
         return _currentView.getPaginationInfo();
     };
+
+    this.getCurrentReadingPosition = function() {
+        return _currentView.getCurrentPosition();
+    };
+
     /**
      * Get CFI of the first element visible in the viewport
      * @returns {ReadiumSDK.Models.BookmarkData}
