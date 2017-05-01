@@ -90,29 +90,30 @@ Helpers.getEbookUrlFilePath = function(ebookURL) {
     }
 };
 
-/**
- *
- * @returns object (map between URL query parameter names and corresponding decoded / unescaped values)
- */
-Helpers.getURLQueryParams = function() {
-    var params = {};
+    /**
+     *
+     * @returns object (map between URL query parameter names and corresponding decoded / unescaped values)
+     */
+    Helpers.getURLQueryParams = function () {
+        var params = {};
 
-    var query = window.location.search;
-    if (query && query.length) {
-        query = query.substring(1);
-        var keyParams = query.split('&');
-        for (var x = 0; x < keyParams.length; x++)
-        {
-            var keyVal = keyParams[x].split('=');
-            if (keyVal.length > 1) {
-                params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+        var query = window.location.search;
+        if (query && query.length) {
+            query = query.substring(1);
+            var keyParams = query.split('&');
+            for (var x = 0; x < keyParams.length; x++) {
+                // assume that after splitting with '&' we only want take one '=' as separator
+                var keyValue = keyParams[x];
+                var eqSignIndex = keyValue.indexOf('=');
+                var parts = keyValue.split('=');
+                if (parts.length > 1) {
+                    params[parts[0]] = decodeURIComponent(keyValue.substring(eqSignIndex + 1));
+                }
             }
         }
-    }
 
-    return params;
-};
-
+        return params;
+    };
 
 /**
  * @param urlpath: string corresponding a URL without query parameters (i.e. the part before the '?' question mark in index.html?param=value). If undefined/null, the default window.location is used.
