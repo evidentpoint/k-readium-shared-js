@@ -1242,8 +1242,8 @@ var CfiNavigationLogic = function (options) {
                 elmID;
 
             isBlacklisted = false;
-            elementClass = $element.className;
-            elementId = $element.id;
+            elementClass = $element[0].className;
+            elementId = $element[0].id;
 
             if (elementClass){
                 _.some(self.getClassBlacklist(), function (value) {
