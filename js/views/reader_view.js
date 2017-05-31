@@ -1738,6 +1738,19 @@ var ReaderView = function (options) {
         }
         return undefined;
     };
+       
+    /**
+     *
+     * @param {HTMLElement} element
+     * @returns {*}
+     */
+    this.getNearestCfiFromElement = function(element) {
+        if (_currentView) {
+            return _currentView.getNearestCfiFromElement(element);
+        }
+        return undefined;
+    };
+    
 };
 
 /**

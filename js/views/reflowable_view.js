@@ -1213,6 +1213,10 @@ var ReflowableView = function(options, reader){
     this.getElementFromPoint = function(x, y) {
         return _navigationLogic.getElementFromPoint(x,y);
     };
+
+    this.getNearestCfiFromElement = function(element) {
+        return createBookmarkFromCfi(_navigationLogic.getNearestCfiFromElement(element));
+    };
 };
     return ReflowableView;
 });

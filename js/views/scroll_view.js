@@ -1421,7 +1421,10 @@ var ScrollView = function (options, isContinuousScroll, reader) {
         });
     };
 
-    //----------- Begin Texidium Changes ----------- // 
+
+    function createBookmarkFromCfi(currentSpineItem, cfi){
+        return new BookmarkData(currentSpineItem.idref, cfi);
+    }
 
     this.getRangeCfiFromDomRange = function (domRange) {
         return callOnVisiblePageView(function (pageView) {
@@ -1453,11 +1456,12 @@ var ScrollView = function (options, isContinuousScroll, reader) {
         });
     };
 
-    function createBookmarkFromCfi(currentSpineItem, cfi){
-        return new BookmarkData(currentSpineItem.idref, cfi);
-    }
+    this.getNearestCfiFromElement = function (element) {
+        return callOnVisiblePageView(function (pageView) {
+            return pageView.getNearestCfiFromElement(element);
+        });
+    };
 
-    //----------- End Texidium Changes ----------- // 
 };
 
 return ScrollView;
