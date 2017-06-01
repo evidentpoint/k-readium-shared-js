@@ -319,13 +319,13 @@ var CfiNavigationLogic = function (options) {
         }
 
         /**
-         * Finds a page index (0-based) for a specific element.
+         * Finds a page index (0-based) delta for a specific element.
          * Calculations are based on rectangles retrieved with getClientRects() method.
          *
          * @param {jQuery} $element
          * @returns {number|null}
          */
-        function findPageByRectangles($element) {
+        function findPageIndexDeltaByRectangles($element) {
 
             var visibleContentOffsets = getVisibleContentOffsets();
 
@@ -334,19 +334,19 @@ var CfiNavigationLogic = function (options) {
                 return null;
             }
 
-            return calculatePageIndexByRectangles(clientRectangles);
+            return calculatePageIndexDeltaByRectangles(clientRectangles);
         }
 
         /**
          * @private
-         * Calculate a page index (0-based) for given client rectangles.
+         * Calculate a page index (0-based) delta for given client rectangles.
          *
          * @param {object[]} clientRectangles
          * @param {object} [frameDimensions]
          * @param {number} [columnFullWidth]
          * @returns {number|null}
          */
-        function calculatePageIndexByRectangles(clientRectangles, frameDimensions, columnFullWidth) {
+        function calculatePageIndexDeltaByRectangles(clientRectangles, frameDimensions, columnFullWidth) {
             var isRtl = isPageProgressionRightToLeft();
             var isVwm = isVerticalWritingMode();
             columnFullWidth = columnFullWidth || getColumnFullWidth();
@@ -374,7 +374,7 @@ var CfiNavigationLogic = function (options) {
         }
 
         /**
-         * Finds a page index (0-based) for a specific client rectangle.
+         * Finds a page index (0-based) delta for a specific client rectangle.
          * Calculations are based on viewport dimensions, offsets, and rectangle coordinates
          *
          * @param {ClientRect} clientRectangle
@@ -382,14 +382,14 @@ var CfiNavigationLogic = function (options) {
          * @param {Object} [frameDimensions]
          * @returns {number|null}
          */
-        function findPageBySingleRectangle(clientRectangle, visibleContentOffsets, frameDimensions) {
+        function findPageIndexDeltaBySingleRectangle(clientRectangle, visibleContentOffsets, frameDimensions) {
             visibleContentOffsets = visibleContentOffsets || getVisibleContentOffsets();
             frameDimensions = frameDimensions || getFrameDimensions();
 
             var normalizedRectangle = normalizeRectangle(
                 clientRectangle, visibleContentOffsets.left, visibleContentOffsets.top);
 
-            return calculatePageIndexByRectangles([normalizedRectangle], frameDimensions);
+            return calculatePageIndexDeltaByRectangles([normalizedRectangle], frameDimensions);
         }
 
         /**
@@ -960,13 +960,13 @@ var CfiNavigationLogic = function (options) {
             return EPUBcfi.Interpreter.hasTextTerminus(getWrappedCfi(partialCfi));
         }
 
-        this.getPageIndexForCfi = function (partialCfi, classBlacklist, elementBlacklist, idBlacklist) {
+        this.getPageIndexDeltaForCfi = function (partialCfi, classBlacklist, elementBlacklist, idBlacklist) {
 
             if (this.isRangeCfi(partialCfi)) {
                 //if given a range cfi the exact page index needs to be calculated by getting node info from the range cfi
                 var nodeRangeInfoFromCfi = this.getNodeRangeInfoFromCfi(partialCfi);
                 //the page index is calculated from the node's client rectangle
-                return findPageBySingleRectangle(nodeRangeInfoFromCfi.clientRect);
+                return findPageIndexDeltaBySingleRectangle(nodeRangeInfoFromCfi.clientRect);
             }
 
             var $element = getElementByPartialCfi(partialCfi, classBlacklist, elementBlacklist, idBlacklist);
@@ -975,7 +975,7 @@ var CfiNavigationLogic = function (options) {
                 return -1;
             }
 
-            return this.getPageIndexForElement($element);
+            return this.getPageIndexDeltaForElement($element);
         };
 
         function getElementByPartialCfi(cfi, classBlacklist, elementBlacklist, idBlacklist) {
@@ -1157,12 +1157,12 @@ var CfiNavigationLogic = function (options) {
             return getElementByPartialCfi(partialCfi, classBlacklist, elementBlacklist, idBlacklist);
         };
 
-        this.getPageIndexForElement = function ($element) {
+        this.getPageIndexDeltaForElement = function ($element) {
 
-            var pageIndex = findPageByRectangles($element);
+            var pageIndex = findPageIndexDeltaByRectangles($element);
             if (pageIndex === null) {
                 //Attempted to locate a hidden element, try a fallback with best guess
-                return findPageByRectangles(this.getNearestCfiFromElement($element[0]));
+                return findPageIndexDeltaByRectangles(this.getNearestCfiFromElement($element[0]));
             }
             return pageIndex;
         };
@@ -1181,14 +1181,14 @@ var CfiNavigationLogic = function (options) {
             return $element;
         };
 
-        this.getPageIndexForElementId = function (id) {
+        this.getPageIndexDeltaForElementId = function (id) {
 
             var $element = this.getElementById(id);
             if (!$element) {
                 return -1;
             }
 
-            return this.getPageIndexForElement($element);
+            return this.getPageIndexDeltaForElement($element);
         };
 
         // returns raw DOM element (not $ jQuery-wrapped)
