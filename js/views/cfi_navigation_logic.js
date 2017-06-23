@@ -1684,6 +1684,9 @@ var CfiNavigationLogic = function (options) {
                 }
             }
 
+            if (!firstVisibleElement) {
+                return null;
+            }
             return {
                 element: firstVisibleElement,
                 textNode: textNode,
@@ -1765,6 +1768,9 @@ var CfiNavigationLogic = function (options) {
                 }
             } while (treeWalker.previousNode());
 
+            if (!firstVisibleElement) {
+                return null;
+            }
             return {
                 element: firstVisibleElement,
                 textNode: textNode,
